@@ -152,7 +152,7 @@ function calcMatch(g) {
     if (g.days <= state.freq) score += 6;
     else cautions.push("活動頻度が希望より多め");
   }
-  if (state.budget !== null) {
+  if (state.budget !== null && g.feeHalf !== null) {
     if (g.feeHalf <= state.budget) score += 5;
     else cautions.push("会費が予算オーバー");
   } else score += 3;
@@ -259,27 +259,35 @@ const CAMPUS_LABEL = { nishichiba: "西千葉", inohana: "亥鼻", matsudo: "松
 
 function groupRow(g, score, cautions) {
   const [kLabel, kClass] = KUBUN_LABEL[g.kubun];
-  const fee = g.feeHalf === 0 ? "会費なし" : "半期" + g.feeHalf.toLocaleString() + "円";
+  const fee = g.feeHalf === null || g.feeHalf === undefined ? "会費未確認"
+    : g.feeHalf === 0 ? "会費なし"
+    : "半期" + g.feeHalf.toLocaleString() + "円";
   const badges = [
     `<span class="badge ${kClass}">${kLabel}</span>`,
     g.incare ? '<span class="badge badge-incare">インカレ</span>' : "",
     g.midEntry ? '<span class="badge badge-mid">途中入会OK</span>' : "",
+    !g.verified ? '<span class="badge badge-hinin">情報は推定・確認中</span>' : "",
     (cautions && cautions.length) ? `<span class="badge badge-caution">注意: ${cautions[0]}</span>` : ""
   ].join("");
   const matchTag = score !== undefined
     ? `<span class="match ${score >= 80 ? "match-hi" : "match-mid"}">${score}%</span>` : "";
-  return `<a class="group-row" href="${g.insta}" target="_blank" rel="noopener">
+  const hasInsta = g.insta && g.insta.startsWith("http");
+  const link = hasInsta ? g.insta
+    : "https://www.google.com/search?q=" + encodeURIComponent("千葉大学 " + g.name);
+  const icon = hasInsta
+    ? `<svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.8" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>
+      <circle cx="17.2" cy="6.8" r="1.1" fill="#993556" stroke="none"/></svg>`
+    : `<svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="#5b6675" stroke-width="1.8" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>`;
+  return `<a class="group-row" href="${link}" target="_blank" rel="noopener">
     <div class="group-main">
       <p class="group-name">${g.name}</p>
       <p class="group-meta">${g.activity}・週${g.days}・${fee}・${CAMPUS_LABEL[g.campus]}</p>
       <div class="badges">${badges}</div>
     </div>
     ${matchTag}
-    <svg class="ig-icon" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.8" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="5"/>
-      <circle cx="12" cy="12" r="4"/>
-      <circle cx="17.2" cy="6.8" r="1.1" fill="#993556" stroke="none"/>
-    </svg>
+    ${icon}
   </a>`;
 }
 
